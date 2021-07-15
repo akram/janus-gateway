@@ -1148,6 +1148,8 @@ int janus_vp9_parse_svc(char *buffer, int len, gboolean *found, janus_vp9_svc_in
 }
 
 inline guint32 janus_push_bits(guint32 word, size_t num, guint32 val) {
+	if(num == 0)
+		return word;
 	return (word << num) | (val & (0xFFFFFFFF>>(32-num)));
 }
 
@@ -1183,7 +1185,7 @@ size_t janus_gzip_compress(int compression, char *text, size_t tlen, char *compr
 	}
 
 	/* Initialize the deflater, and clarify we need gzip */
-	z_stream zs;
+	z_stream zs = { 0 };
 	zs.zalloc = Z_NULL;
 	zs.zfree = Z_NULL;
 	zs.opaque = Z_NULL;

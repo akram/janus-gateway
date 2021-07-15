@@ -3,6 +3,41 @@
 All notable changes to this project will be documented in this file.
 
 
+## [v0.11.3] - 2021-06-15
+
+- Fixed rare crash when detaching handles [[Issue-2464](#2464)]
+- Added option to offer IPv6 link-local candidates as well [[PR-2689](#2689)]
+- Added spatial audio support to AudioBridge via stereo mixing [[PR-2446](#2446)]
+- Added support for plain RTP participants to AudioBridge [[PR-2464](#2464)]
+- Added API to start/stop AudioBridge recordings dynamically (thanks @rajneeshksoni!) [[PR-2674](#2674)]
+- Fixed broken mountpoint switching when using different payload types in Streaming plugin [[PR-2692](#2692)]
+- Fixed occasional deadlock on Streaming plugin mountpoint destroy during RTSP reconnects (thanks @lionelnicolas!) [[PR-2700](#2700)]
+- Added "Expires" support to SUBSCRIBE in SIP plugin (thanks @nicolasduteil!) [[PR-2661](#2661)]
+- Added option to specify Call-ID for SUBSCRIBE dialogs in SIP plugin (thanks @nicolasduteil!) [[PR-2664](#2664)]
+- Fixed broken simulcast support in VideoCall plugin (thanks @lucily-star!) [[PR-2671](#2671)]
+- Implemented RabbitMQ reconnection logic, in both transport and event handler (thanks @chriswiggins!) [[PR-2651](#2651)]
+- Added support for renegotiation of external streams in janus.js (thanks @kmeyerhofer!) [[PR-2604](#2604)]
+- Added support for HEVC/H.265 aggregation packets (AP) to janus-pp-rec (thanks @nu774!) [[PR-2662](#2662)]
+- Refactored janus-pp-rec to cleanup the code, and use libavformat for Opus as well (thanks @lu-zero!) [[PR-2665](#2665)]
+- Added additional target formats for some recorded codecs [[PR-2680](#2680)]
+- Other smaller fixes and improvements (thanks to all who contributed pull requests and reported issues!)
+
+## [v0.11.2] - 2021-05-03
+
+- Added support for relative paths in config files, currently only in MQTT event handler (thanks @RSATom!) [[PR-2623](#2623)]
+- Removed support for now deprecated frame-marking RTP extension [[PR-2640](#2640)]
+- Fixed rare race condition between VideoRoom publisher leaving and subscriber hanging up [[PR-2637](#2637)]
+- Fixed occasional crash when using announcements in AudioBridge
+- Fixed rare crash in Streaming plugin when reconnecting RTSP streams (thanks @lucylu-star!) [[PR-2542](#2542)]
+- Fixed broken switch in Streaming plugin when using helper threads
+- Fixed rare race conditions on socket close in SIP and NoSIP plugins [[PR-2599](#2599)]
+- Added support for out-of-dialog SIP MESSAGE requests (thanks @ihusejnovic!) [[PR-2616](#2616)]
+- Fixed memory leak when using helper threads in Streaming plugin
+- Added support for datachannel label/protocol to Lua and Duktape plugins [[PR-2641](#2641)]
+- Added ability to use WebSockets transport over Unix sockets (thanks @mdevaev!) [[PR-2620](#2620)]
+- Added janus-pp-rec mechanism to correct wrong RTP timestamps in MJR recordings (thanks @tbence94!) [[PR-2573](#2573)]
+- Other smaller fixes and improvements (thanks to all who contributed pull requests and reported issues!)
+
 ## [v0.11.1] - 2021-04-06
 
 - Add new option to configure ICE nomination mode, if libnice is recent enough [[PR-2541](#2541)]
