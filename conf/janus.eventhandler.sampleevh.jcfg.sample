@@ -12,9 +12,18 @@ general: {
 	grouping = true		# Whether events should be sent individually (one per
 						# HTTP POST, JSON object), or if it's ok to group them
 						# (one or more per HTTP POST, JSON array with objects)
-						# The default is 'yes' to limit the number of connections.
-	json = "indented"	# Whether the JSON messages should be indented (default),
+						# The default is 'true' to limit the number of connections.
+	json = "compact"	# Whether the JSON messages should be indented (pretty),
 						# plain (no indentation) or compact (no indentation and no spaces)
+
+						# Absolute cap on pending events. Keeps newest events by discarding oldest ones.
+						# 0 disables the cap (default).
+						# Use the Admin API's "query_eventhandler" requests to inspect
+						# or change this limit at runtime. The "info" request reports the current
+						# limit, queue size and number of events dropped in the queue.
+						# The "tweak" request updates "events_max_queue". The new limit
+						# is enforced when the next event is added to the queue.
+	#events_max_queue = 10000
 
 	#compress = true	# Optionally, the JSON messages can be compressed using zlib
 	#compression = 9	# In case, you can specify the compression factor, where 1 is

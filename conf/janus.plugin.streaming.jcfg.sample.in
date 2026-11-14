@@ -1,3 +1,14 @@
+# You can configure static mountpoints that should be made available
+# when Janus starts in this configuration file. The syntax and the
+# available properties are listed below. Notice that, for the sake of
+# simplicity, only the global and legacy properties are listed in the
+# following text: you can use the new stream-based syntax as well (see
+# the 'multistream-test' example below for reference), but in that case
+# all properties whose names start with audio/video/data should be
+# renamed to have that prefix removed. Please refer to the Streaming
+# plugin documentation for more details, as the static configuration
+# in that case mirrors the dynamic API syntax.
+#
 # stream-name: {
 # type = rtp|live|ondemand|rtsp
 #        rtp = stream originated by an external tool (e.g., gstreamer or
@@ -27,7 +38,7 @@
 # audiomcast = multicast group port for receiving audio frames, if any
 # audioiface = network interface or IP address to bind to, if any (binds to all otherwise)
 # audiopt = <audio RTP payload type> (e.g., 111)
-# audiortpmap = RTP map of the audio codec (e.g., opus/48000/2)
+# audiocodec = name of the audio codec (e.g., opus)
 # audioskew = true|false (whether the plugin should perform skew
 #		analisys and compensation on incoming audio RTP stream, EXPERIMENTAL)
 # videoport = local port for receiving video frames
@@ -35,15 +46,16 @@
 # videomcast = multicast group port for receiving video frames, if any
 # videoiface = network interface or IP address to bind to, if any (binds to all otherwise)
 # videopt = <video RTP payload type> (e.g., 100)
-# videortpmap = RTP map of the video codec (e.g., VP8/90000)
-# videobufferkf = true|false (whether the plugin should store the latest
-#		keyframe and send it immediately for new viewers, EXPERIMENTAL)
+# videocodec = name of the video codec (e.g., vp8)
 # videosimulcast = true|false (do|don't enable video simulcasting)
 # videoport2 = second local port for receiving video frames (only for rtp, and simulcasting)
 # videoport3 = third local port for receiving video frames (only for rtp, and simulcasting)
 # videoskew = true|false (whether the plugin should perform skew
 #		analisys and compensation on incoming video RTP stream, EXPERIMENTAL)
 # videosvc = true|false (whether the video will have SVC support; works only for VP9-SVC, default=false)
+# h264sps = if using H.264 as a video codec, value of the sprop-parameter-sets
+#		that would normally be sent via SDP, but that we'll use to instead
+#		manually ingest SPS and PPS packets via RTP for streams that miss it
 # collision = in case of collision (more than one SSRC hitting the same port), the plugin
 #		will discard incoming RTP packets with a new SSRC unless this many milliseconds
 #		passed, which would then change the current SSRC (0=disabled)
@@ -55,6 +67,39 @@
 # threads = number of threads to assist with the relaying part, which can help
 #		if you expect a lot of viewers that may cause the RTP receiving part
 #		in the Streaming plugin to slow down and fail to catch up (default=0)
+#
+# Note: by default, the Streaming plugin only forwards the latest packets
+# it receives, never performing any buffering. This means that, for video
+# streams, new viewers may initially start receiving frames they cannot
+# decode right away, since they'd refer to keyframes that were sent before
+# they joined. In such scenarios, they'd have to wait until the next keyframe
+# arrives before video can be decoded and displayed, which could take a
+# while depending on the frequency of keyframes encoded by the source.
+# For forwarded streams (e.g., from the VideoRoom) this can be easily
+# addressed by using the RTCP support. For sources that can't or won't
+# honour dynamic keyframe requests, a partial and experimental solution
+# might be storing the latest keyframe and the following deltas, to send
+# to new viewers before new live packet are delivered. This feature can
+# be enabled in the Streaming plugin using the 'bufferkf_ms' and/or
+# the 'bufferkf_bytes' properties, which configure how many milliseconds
+# or how many bytes (in total) should be stored any time a keyframe is
+# received: data exceeding those limits won't be stored, until a new
+# keyframe arrives. The two properties are not mutually exclusive, and
+# can be configured at the same time: in that case, the first one that
+# hits the limit stops the buffering of the current keyframe. Notice
+# that, again, this feature should be considered highly experimental,
+# and that it comes with a few considerable drawbacks: the most obvious
+# one is that, depending on how many packets were stored, new viewers
+# may be hit with a considerable burst of data as soon as they connect,
+# which may negatively impact performance or even cause issues of its own.
+# Also notice that this is a global, and not per-stream, feature: this
+# means that if you create a mountpoint with two video streams, the
+# feature will impact both of them, and both streams will have a buffer
+# of their own. This also works for RTSP mountpoints.
+#	bufferkf_ms = how many milliseconds of packets to store, starting
+#					from a new keyframe (default=0)
+#	bufferkf_bytes = how many bytes of packets to store, starting
+#					from a new keyframe (default=0)
 #
 # In case you want to use SRTP for your RTP-based mountpoint, you'll need
 # to configure the SRTP-related properties as well, namely the suite to
@@ -74,10 +119,25 @@
 # DO NOT SET THIS PROPERTY IF YOU DON'T KNOW WHAT YOU'RE DOING!
 # e2ee = true
 #
+# To allow mountpoints to negotiate the playout-delay RTP extension,
+# you can set the 'playoutdelay_ext' property to true: this way, any
+# subscriber can customize the playout delay of incoming video streams,
+# assuming the browser supports the RTP extension in the first place.
+# playoutdelay_ext = true
+#
+# To allow mountpoints to negotiate the abs-capture-time RTP extension,
+# you can set the 'abscapturetime_src_ext_id' property to value in range 1..14 inclusive: this way, any
+# subscriber can receive the abs-capture-time of incoming RTP streams,
+# assuming the browser supports the RTP extension in the first place.
+# Incoming RTP stream should provide abs-capture-time exactly in the same header id.
+# abscapturetime_src_ext_id = 1
+#
 # The following options are only valid for the 'rtsp' type:
 # url = RTSP stream URL (only for restreaming RTSP)
 # rtsp_user = RTSP authorization username (only if type=rtsp)
 # rtsp_pwd = RTSP authorization password (only if type=rtsp)
+# rtsp_quirk = Some RTSP servers offer the stream using only the path, instead of the fully qualified URL.
+#		If set true, this boolean informs Janus that we should try a path-only DESCRIBE request if the initial request returns 404.
 # rtsp_failcheck = whether an error should be returned if connecting to the RTSP server fails (default=true)
 # rtspiface = network interface or IP address to bind to, if any (binds to all otherwise), when receiving RTSP streams
 # rtsp_reconnect_delay = after n seconds passed and no media assumed, the RTSP server has gone and schedule a reconnect (default=5s)
@@ -88,9 +148,14 @@
 # 		formula: timeout = min(session_timeout, rtsp_session_timeout / 2). (default=0s)
 # rtsp_timeout = communication timeout (CURLOPT_TIMEOUT) for cURL call gathering the RTSP information (default=10s)
 # rtsp_conn_timeout = connection timeout for cURL (CURLOPT_CONNECTTIMEOUT) call gathering the RTSP information (default=5s)
+# rtsp_notify_changes = if set to true, will send an event to connected users when the RTSP session
+#		gets disconnected, and when it's reconnected (default=false)
+# rtsp_fmtp_sps = what the plugin should do it if finds SPS/PPS info in an SDP fmtp attribute sent by the RTSP server;
+#		the default value is "always", to manually inject them in RTP traffic, as that's what WebRTC endpoints need;
+#		to disable this behaviour (e.g., if the camera already sends SPS/PPS in-stream via RTP too) use "never"
 #
 # Notice that, for 'rtsp' mountpoints, normally the plugin uses the exact
-# SDP rtpmap and fmtp attributes the remote camera or RTSP server sent.
+# SDP codec and fmtp attributes the remote camera or RTSP server sent.
 # In case the values set remotely are known to conflict with WebRTC viewers,
 # you can override both using the settings introduced above.
 #
@@ -131,10 +196,61 @@ rtp-sample: {
 	video = true
 	audioport = 5002
 	audiopt = 111
-	audiortpmap = "opus/48000/2"
+	audiocodec = "opus"
 	videoport = 5004
 	videopt = 100
-	videortpmap = "VP8/90000"
+	videocodec = "vp8"
+	secret = "adminpwd"
+}
+
+#
+# This is a better example that uses the new settings to configure a live
+# mountpoint to send multiple streams of the same type at the same time:
+# that is, not simulcasting, but different streams (e.g., two audio
+# streams and two video streams). To do so, you don't set the audio,
+# video and data properties inline, but use an array of properties instead,
+# each identifying a single stream to add, that will then translate to
+# a dedicated m-line in the SDP. For each stream, you specify the type,
+# a unique ID (mid), and can provide a short description (label) so that
+# the client side can know what's what when rendering the streams;
+# optionally, a msid to add to the SDP m-line can be provided as well. Notice
+# how the port/pt/codec/fmtp/etc. stuff is called just like that, without
+# any audio/video/data prefix: in fact, each media stream can be configured
+# the same way, and it's the type that allows us to differentiate them.
+# As such, you can use the same approach for creating regular mountpoints
+# as well (e.g., 1 audio and 1 video) in a much clearer, and cleaner, way.
+#
+multistream-test: {
+	type = "rtp"
+	id = 123
+	description = "Multistream test (1 audio, 2 video)"
+	metadata = "This is an example of a multistream mountpoint: you'll get an audio stream and two video feeds"
+	media = (
+		{
+			type = "audio"
+			mid = "a"
+			label = "Audio stream"
+			port = 5102
+			pt = 111
+			codec = "opus"
+		},
+		{
+			type = "video"
+			mid = "v1"
+			label = "Video stream #1"
+			port = 5104
+			pt = 100
+			codec = "vp8"
+		},
+		{
+			type = "video"
+			mid = "v2"
+			label = "Video stream #2"
+			port = 5106
+			pt = 100
+			codec = "vp8"
+		}
+	)
 	secret = "adminpwd"
 }
 
@@ -148,7 +264,8 @@ rtp-sample: {
 file-live-sample: {
 	type = "live"
 	id = 2
-	description = "a-law file source (radio broadcast)"
+	description = "Pseudo-live radio broadcast (a-law file source)"
+	metadata = "This is a pseudo-live stream, whose source is actually a static Opus file on the disk: the Streaming plugin goes through the file in real-time, and sends the frames via RTP. It's pseudo-live because it progresses even when there are no subscribers, and all subscribers get the same audio."
 	filename = "@streamdir@/radio.alaw"
 	audio = true
 	video = false
@@ -158,17 +275,21 @@ file-live-sample: {
 #
 # This is another sample of the file-based streaming support, but using
 # the "ondemand" type instead. In this case, the file we're streaming
-# contains raw mu-Law (still G.711) frames. Since this is "ondemand",
+# is an Opus file containing stereo opus frames. Since this is "ondemand",
 # anyone subscribing to this mountpoint will listen to their own version
 # of the stream, meaning that it will start from the beginning and then
-# loop when it's over. On-demand streaming supports Opus files as well.
+# loop when it's over. On-demand streaming supports G.711 files as well.
 #
 file-ondemand-sample: {
 	type = "ondemand"
 	id = 3
-	description = "mu-law file source (music)"
-	filename = "@streamdir@/music.mulaw"
+	description = "Remembrance, by Lorenzo Miniero (stereo music, Opus)"
+	metadata = "This is an on-demand stream, whose source is actually a static Opus file on the disk: when a subscriber opens it, the Streaming plugin starts from the beginning and goes through the file in real-time, and sends the frames via RTP. Unlike the pseudo-live sample, each subscriber opening it will experience a personal playout."
+	filename = "@streamdir@/remembrance.opus"
 	audio = true
+	audiopt = 100
+	audiortpmap = "opus/48000/2"
+	audiofmtp = "stereo=1"
 	video = false
 	secret = "adminpwd"
 }
@@ -190,7 +311,7 @@ file-ondemand-sample: {
 	#video = true
 	#videoport = 8004
 	#videopt = 126
-	#videortpmap = "H264/90000"
+	#videocodec = "h264"
 	#videofmtp = "profile-level-id=42e01f;packetization-mode=1"
 	#secret = "adminpwd"
 #}
@@ -230,11 +351,11 @@ file-ondemand-sample: {
 	#audioport = 5002
 	#audiomcast = "232.3.4.5"
 	#audiopt = 111
-	#audiortpmap = "opus/48000/2"
+	#audiocodec = "opus"
 	#videoport = 5004
 	#videomcast = "232.3.4.5"
 	#videopt = 100
-	#videortpmap = "VP8/90000"
+	#videocodec = "vp8"
 	#secret = "adminpwd"
 #}
 
@@ -245,7 +366,7 @@ file-ondemand-sample: {
 # authentication will only work if you installed libcurl >= 7.45.0)
 # NOTE WELL: the plugin does NOT transcode, so the RTSP stream MUST be
 # in a format the browser can digest (e.g., VP8 or H.264 baseline for video)
-# Again, you can override payload type, rtpmap and/or fmtp, if needed.
+# Again, you can override payload type, codec and/or fmtp, if needed.
 #
 #rtsp-test: {
 	#type = "rtsp"

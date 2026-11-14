@@ -5,62 +5,65 @@ Janus WebRTC Server
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/13265/badge.svg)](https://scan.coverity.com/projects/meetecho-janus-gateway)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/janus-gateway.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:janus-gateway)
 
-Janus is an open source, general purpose, WebRTC server designed and developed by [Meetecho](http://www.meetecho.com). This version of the server is tailored for Linux systems, although it can be compiled for, and installed on, MacOS machines as well. Windows is not supported, but if that's a requirement, Janus is known to work in the "Windows Subsystem for Linux" on Windows 10: do **NOT** trust repos that provide .exe builds of Janus, they are not official and will not be supported.
+Janus is an open source, general purpose, WebRTC server designed and developed by [Meetecho](https://www.meetecho.com). This version of the server is tailored for Linux systems, although it can be compiled for, and installed on, MacOS machines as well. Windows is not supported, but if that's a requirement, Janus is known to work in the "Windows Subsystem for Linux" on Windows 10: do **NOT** trust repos that provide .exe builds of Janus, they are not official and will not be supported.
 
 For some online demos and documentations, make sure you pay the [project website](https://janus.conf.meetecho.com/) a visit!
 
-If you have questions on Janus, or wish to discuss Janus with us and other users, please join our [meetecho-janus](https://groups.google.com/forum/#!forum/meetecho-janus) Google Group. If you encounter bugs, please submit an issue on [GitHub](https://github.com/meetecho/janus-gateway/issues): make sure you read the [guidelines](.github/ISSUE_TEMPLATE.md) before opening an issue, though.
+> **Note well:** this is the main branch for the `multistream` version of Janus, which is the new version. If you want to check the legacy version of Janus instead (i.e., `0.x`, a.k.a. "legacy") click [here](https://github.com/meetecho/janus-gateway/tree/0.x) instead.
+
+If you have questions on Janus, or wish to discuss Janus with us and other users, please join our [Community](https://janus.discourse.group/). If you encounter bugs, please submit an issue on [GitHub](https://github.com/meetecho/janus-gateway/issues): make sure you read the [guidelines](.github/CONTRIBUTING.md) before opening an issue or a pull request, though.
 
 
 ## Dependencies
 To install it, you'll need to satisfy the following dependencies:
 
-* [Jansson](http://www.digip.org/jansson/)
+* [GLib](https://docs.gtk.org/glib/)
+* [zlib](https://zlib.net/)
+* [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/)
+* [Jansson](https://github.com/akheron/jansson)
 * [libconfig](https://hyperrealm.github.io/libconfig/)
 * [libnice](https://libnice.freedesktop.org/) (at least v0.1.16 suggested, v0.1.18 recommended)
-* [OpenSSL](http://www.openssl.org/) (at least v1.0.1e)
+* [OpenSSL](https://www.openssl.org/) (at least v1.0.1e)
 * [libsrtp](https://github.com/cisco/libsrtp) (at least v2.x suggested)
+
+These are optional dependencies, depending on which features you're interested in:
+
 * [usrsctp](https://github.com/sctplab/usrsctp) (only needed if you are interested in Data Channels)
-* [libmicrohttpd](http://www.gnu.org/software/libmicrohttpd/) (at least v0.9.59; only needed if you are interested in REST support for the Janus API)
-* [libwebsockets](https://libwebsockets.org/) (only needed if you are interested in WebSockets support for the Janus API)
-* [cmake](http://www.cmake.org/) (only needed if you are interested in WebSockets and/or BoringSSL support, as they make use of it)
+* [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) (at least v0.9.59; only needed if you are interested in REST support for the Janus API)
+* [libwebsockets](https://libwebsockets.org/) (at least v4.x suggested; only needed if you are interested in WebSockets support for the Janus API)
+* [cmake](https://www.cmake.org/) (only needed if you are interested in WebSockets and/or BoringSSL support, as they make use of it)
 * [rabbitmq-c](https://github.com/alanxz/rabbitmq-c) (only needed if you are interested in RabbitMQ support for the Janus API or events)
 * [paho.mqtt.c](https://eclipse.org/paho/clients/c) (only needed if you are interested in MQTT support for the Janus API or events)
 * [nanomsg](https://nanomsg.org/) (only needed if you are interested in Nanomsg support for the Janus API)
 * [libcurl](https://curl.haxx.se/libcurl/) (only needed if you are interested in the TURN REST API support)
 
-A couple of plugins depend on a few more libraries:
+A couple of plugins depend on a few more libraries (you only need to install the ones for the plugins you need):
 
-* [Sofia-SIP](http://sofia-sip.sourceforge.net/) (only needed for the SIP plugin)
-* [libopus](http://opus-codec.org/) (only needed for the AudioBridge plugin)
-* [libogg](http://xiph.org/ogg/) (needed for the VoiceMail plugin and/or post-processor, and optionally AudioBridge and Streaming plugins)
+* [Sofia-SIP](https://github.com/freeswitch/sofia-sip) (only needed for the SIP plugin)
+* [libopus](https://opus-codec.org/) (only needed for the AudioBridge plugin)
+* [libogg](https://xiph.org/ogg/) (needed for the recordings post-processor, and optionally AudioBridge and Streaming plugins)
 * [libcurl](https://curl.haxx.se/libcurl/) (only needed if you are interested in RTSP support in the Streaming plugin or in the sample Event Handler plugin)
 * [Lua](https://www.lua.org/download.html) (only needed for the Lua plugin)
+* [Duktape](https://duktape.org/) (only needed for the Duktape plugin)
 
-Additionally, you'll need the following libraries and tools:
-
-* [GLib](http://library.gnome.org/devel/glib/)
-* [zlib](https://zlib.net/)
-* [pkg-config](http://www.freedesktop.org/wiki/Software/pkg-config/)
-* [gengetopt](http://www.gnu.org/software/gengetopt/)
 
 All of those libraries are usually available on most of the most common distributions. Installing these libraries on a recent Fedora, for instance, is very simple:
 
     yum install libmicrohttpd-devel jansson-devel \
        openssl-devel libsrtp-devel sofia-sip-devel glib2-devel \
-       opus-devel libogg-devel libcurl-devel pkgconfig gengetopt \
+       opus-devel libogg-devel libcurl-devel pkgconfig \
        libconfig-devel libtool autoconf automake
 
 Notice that you may have to `yum install epel-release` as well if you're attempting an installation on a CentOS machine instead.
 
 On Ubuntu or Debian, it would require something like this:
 
-	aptitude install libmicrohttpd-dev libjansson-dev \
-		libssl-dev libsrtp-dev libsofia-sip-ua-dev libglib2.0-dev \
+	apt install libmicrohttpd-dev libjansson-dev \
+		libssl-dev libsofia-sip-ua-dev libglib2.0-dev \
 		libopus-dev libogg-dev libcurl4-openssl-dev liblua5.3-dev \
-		libconfig-dev pkg-config gengetopt libtool automake
+		libconfig-dev pkg-config libtool automake
 
-* *Note:* please notice that libopus may not be available out of the box on your distro. In that case, you'll have to [install it manually](http://www.opus-codec.org).
+* *Note:* please notice that libopus may not be available out of the box on your distro. In that case, you'll have to [install it manually](https://www.opus-codec.org).
 
 While `libnice` is typically available in most distros as a package, the version available out of the box in Ubuntu is known to cause problems. As such, we always recommend manually compiling and installing the master version of libnice.
 To build libnice, you need Python 3, Meson and Ninja:
@@ -73,7 +76,7 @@ To build libnice, you need Python 3, Meson and Ninja:
 
 In case you're interested in compiling the sample Event Handler plugin, you'll need to install the development version of libcurl as well (usually `libcurl-devel` on Fedora/CentOS, `libcurl4-openssl-dev` on Ubuntu/Debian).
 
-If your distro ships a pre-1.5 version of libsrtp, you'll have to uninstall that version and [install 1.5.x, 1.6.x or 2.x manually](https://github.com/cisco/libsrtp/releases). In fact, 1.4.x is known to cause several issues with WebRTC. While 1.5.x is supported, we recommend installing 2.x instead Notice that the following steps are for version 2.2.0, but there may be more recent versions available:
+If your distro ships a pre-1.5 version of libsrtp, you'll have to uninstall that version and [install 1.5.x, 1.6.x or 2.x manually](https://github.com/cisco/libsrtp/releases). In fact, 1.4.x is known to cause several issues with WebRTC. While 1.5.x is supported, we recommend installing 2.x instead. Notice that the following steps are for version 2.2.0, but there may be more recent versions available:
 
 	wget https://github.com/cisco/libsrtp/archive/v2.2.0.tar.gz
 	tar xfv v2.2.0.tar.gz
@@ -96,17 +99,13 @@ If you want to make use of BoringSSL instead of OpenSSL (e.g., because you want 
 	# Build
 	mkdir -p build
 	cd build
-	cmake -DCMAKE_CXX_FLAGS="-lrt" ..
+	cmake -DCMAKE_INSTALL_PREFIX=/opt/boringssl -DCMAKE_CXX_FLAGS="-lrt" ..
 	make
-	cd ..
-	# Install
-	sudo mkdir -p /opt/boringssl
-	sudo cp -R include /opt/boringssl/
-	sudo mkdir -p /opt/boringssl/lib
-	sudo cp build/ssl/libssl.a /opt/boringssl/lib/
-	sudo cp build/crypto/libcrypto.a /opt/boringssl/lib/
+	sudo make install
 
 Once the library is installed, you'll have to pass an additional `--enable-boringssl` flag to the configure script, as by default Janus will be built assuming OpenSSL will be used. By default, Janus expects BoringSSL to be installed in `/opt/boringssl` -- if it's installed in another location, pass the path to the configure script as such: `--enable-boringssl=/path/to/boringssl` If you were using OpenSSL and want to switch to BoringSSL, make sure you also do a `make clean` in the Janus folder before compiling with the new BoringSSL support. If you enabled BoringSSL support and also want Janus to detect and react to DTLS timeouts with faster retransmissions, then pass `--enable-dtls-settimeout` to the configure script too.
+
+* *Note:* as explained in [this issue](https://github.com/meetecho/janus-gateway/issues/3456), building Janus with more recent versions of BoringSSL may require you to pass a `CCLD=c++` for any `make` command to build Janus itself.
 
 For what concerns usrsctp, which is needed for Data Channels support, it is usually not available in repositories, so if you're interested in them (support is optional) you'll have to install it manually. It is a pretty easy and standard process:
 
@@ -123,7 +122,7 @@ The same applies for libwebsockets, which is needed for the optional WebSockets 
 	git clone https://libwebsockets.org/repo/libwebsockets
 	cd libwebsockets
 	# If you want the stable version of libwebsockets, uncomment the next line
-	# git checkout v3.2-stable
+	# git checkout v4.3-stable
 	mkdir build
 	cd build
 	# See https://github.com/meetecho/janus-gateway/issues/732 re: LWS_MAX_SMP
@@ -161,8 +160,8 @@ Finally, the same can be said for rabbitmq-c as well, which is needed for the op
 
 To conclude, should you be interested in building the Janus documentation as well, you'll need some additional tools too:
 
-* [Doxygen](http://www.doxygen.org)
-* [Graphviz](http://www.graphviz.org/)
+* [Doxygen](https://www.doxygen.org)
+* [Graphviz](https://www.graphviz.org/)
 
 On Fedora:
 
@@ -216,7 +215,7 @@ since it is a GNU makefile. `./configure` can be run without arguments since the
 Note that the `configure.ac` is coded to use openssl in base. If you wish to use openssl from ports or any other ssl you must change `configure.ac` accordingly.
 
 	pkg install libsrtp2 libusrsctp jansson libnice libmicrohttpd libwebsockets curl opus sofia-sip libogg jansson libnice libconfig \
-        libtool gmake autoconf autoconf-wrapper glib gengetopt
+        libtool gmake autoconf autoconf-wrapper glib
 
 
 ### Building on MacOS
@@ -226,7 +225,7 @@ First of all, you can use `brew` to install most of the dependencies:
 
 	brew install jansson libnice openssl srtp libusrsctp libmicrohttpd \
 		libwebsockets cmake rabbitmq-c sofia-sip opus libogg curl glib \
-		libconfig pkg-config gengetopt autoconf automake libtool
+		libconfig pkg-config autoconf automake libtool
 
 For what concerns libwebsockets, though, make sure that the installed version is higher than `2.4.1`, or you might encounter the problems described in [this post](https://groups.google.com/forum/#!topic/meetecho-janus/HsFaEXBz4Cg). If `brew` doesn't provide a more recent version, you'll have to install the library manually.
 
@@ -286,8 +285,6 @@ or on the command line:
                                   (experimental)  (default=off)
 	-O, --ipv6-link-local         Whether IPv6 link-local candidates should be
                                   gathered as well  (default=off)
-	-l, --libnice-debug           Whether to enable libnice debugging or not
-                                  (default=off)
 	-f, --full-trickle            Do full-trickle instead of half-trickle
                                   (default=off)
 	-I, --ice-lite                Whether to enable the ICE Lite mode or not
@@ -303,6 +300,7 @@ or on the command line:
 	-W, --slowlink-threshold=number
                                   Number of lost packets (per s) that should
                                   trigger a 'slowlink' Janus API event to users
+                                  (default=0, feature disabled)
 	-r, --rtp-port-range=min-max  Port range to use for RTP/RTCP (only available
 								  if the installed libnice supports it)
 	-B, --twcc-period=number      How often (in ms) to send TWCC feedback back to
@@ -338,10 +336,10 @@ This will start the server, and have it look at the configuration file.
 
 Make sure you have a look at all of the configuration files, to tailor Janus to your specific needs: each configuration file is documented, so it shouldn't be hard to make changes according to your requirements. The repo comes with some defaults (assuming you issues `make configs` after installing the server) that tend to make sense for generic deployments, and also includes some sample configurations for all the plugins (e.g., web servers to listen on, conference rooms to create, streaming mountpoints to make available at startup, etc.).
 
-To test whether it's working correctly, you can use the demos provided with this package in the `html` folder: these are exactly the same demos available online on the [project website](http://janus.conf.meetecho.com/). Just copy the file it contains in a webserver, or use a userspace webserver to serve the files in the `html` folder (e.g., with php or python), and open the `index.html` page in either Chrome or Firefox. A list of demo pages exploiting the different plugins will be available. Remember to edit the transport/port details in the demo JavaScript files if you changed any transport-related configuration from its defaults. Besides, the demos refer to the pre-configured plugin resources, so if you add some new resources (e.g., a new videoconference) you may have to tweak the demo pages to actually use them.
+To test whether it's working correctly, you can use the demos provided with this package in the `html` folder: these are exactly the same demos available online on the [project website](https://janus.conf.meetecho.com/). Just copy the file it contains in a webserver, or use a userspace webserver to serve the files in the `html` folder (e.g., with php or python), and open the `index.html` page in either Chrome or Firefox. A list of demo pages exploiting the different plugins will be available. Remember to edit the transport/port details in the demo JavaScript files if you changed any transport-related configuration from its defaults. Besides, the demos refer to the pre-configured plugin resources, so if you add some new resources (e.g., a new videoconference) you may have to tweak the demo pages to actually use them.
 
 ## Documentation
-Janus is thoroughly documented. You can find the current documentation, automatically generated with Doxygen, on the [project website](http://janus.conf.meetecho.com/docs/).
+Janus is thoroughly documented. You can find the current documentation, automatically generated with Doxygen, on the [project website](https://janus.conf.meetecho.com/docs/).
 
 ## Help us!
 Any thought, feedback or (hopefully not!) insult is welcome!
